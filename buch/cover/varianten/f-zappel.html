@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zu viel für gestern – Variante F: Zappel</title>
+<style>
+  @font-face { font-family: "BigShoulders"; src: url("../fonts/BigShoulders-Bold.ttf") format("truetype"); font-weight: 700; }
+  @font-face { font-family: "InstrumentSerif"; src: url("../fonts/InstrumentSerif-Italic.ttf") format("truetype"); font-style: italic; }
+  @font-face { font-family: "InstrumentSans"; src: url("../fonts/InstrumentSans-Regular.ttf") format("truetype"); }
+  @font-face { font-family: "GeistMono"; src: url("../fonts/GeistMono-Regular.ttf") format("truetype"); }
+  @font-face { font-family: "CourierPrime"; src: url("../fonts/CourierPrime-Regular.ttf") format("truetype"); }
+  @font-face { font-family: "Caveat"; src: url("../fonts/Caveat-Medium.ttf") format("truetype"); font-weight: 500; }
+  @page { size: 135mm 215mm; margin: 0; }
+  html, body { margin: 0; padding: 0; background: #DDE3E7; }
+  svg { display: block; width: 900px; height: 1433px; }
+  @media print { svg { width: 135mm; height: 215mm; } }
+</style>
+</head>
+<body>
+<svg id="cover" viewBox="0 0 900 1433" xmlns="http://www.w3.org/2000/svg"></svg>
+<script src="shared.js"></script>
+<script>
+// Variante F: „ZU VIEL“ kann nicht stillhalten, „für gestern.“ steht stramm
+const TEXT = {
+  author:  'MORITZ WOLKE',
+  lines:   ['ZU', 'VIEL'],
+  title2:  'für gestern',
+  sub:     ['Warum ADHS im KI-Zeitalter', 'zur Superkraft wird'],
+  tagline: 'Genau richtig für morgen.',
+  caption: 'ABWEICHUNG ≠ FEHLER',
+};
+const C = { bg: '#DDE3E7', ink: '#15171B', sub: '#2A2D33', signal: '#FF4A1C', mute: '#7D868C' };
+// Pro Buchstabe: Drehung in Grad, Versatz x/y in px (bewusst klein, sonst wirkt es verspielt)
+const JITTER = [[-3, 6, 6], [2.5, 4, -8], [-2, 4, 4], [3.5, -2, -10], [-3, 3, 7], [2, -6, -3]];
+
+function draw() {
+  el('rect', { x: 0, y: 0, width: W, height: H, fill: C.bg });
+  const yA = author(TEXT, C.ink);
+  const footTop = footer(TEXT, C);
+
+  // Untertitel und „für gestern.“ von unten aufbauen
+  const fS = [400, 29, FONTS.sans], lh = 39;
+  const f2 = [400, 138, FONTS.serif, 'italic'];
+  const m2 = ink(TEXT.title2 + '.', f2);
+  const ySubLast = footTop - 78;
+  const yS = ySubLast - (TEXT.sub.length - 1) * lh;
+  TEXT.sub.forEach((line, i) => { const m = ink(line, fS); text(line, M + m.left, yS + i * lh, fS, { fill: C.sub }); });
+  const mS0 = ink(TEXT.sub[0], fS);
+  const y2 = yS - mS0.asc - 44 - m2.desc;
+  const t2 = text(TEXT.title2, M + m2.left, y2, f2, { fill: C.ink });
+  el('tspan', { fill: C.signal }, t2).textContent = '.';
+
+  // Zwei Titelzeilen: „VIEL“ füllt die Breite, beide gleich groß
+  const size = fitSize(TEXT.lines[1], [700, 0, FONTS.display], CONTENT_W);
+  const fT = [700, size, FONTS.display];
+  const mV = ink(TEXT.lines[1], fT);
+  const capH = mV.asc;
+  const areaTop = yA + 52, areaBottom = y2 - m2.asc - 40;
+  const gap = Math.max(18, (areaBottom - areaTop - 2 * capH) / 1);
+  const base = [areaTop + capH, areaTop + 2 * capH + Math.min(gap, 40)];
+  // falls Platz übrig ist: Block mittig in den Raum setzen
+  const spare = areaBottom - base[1];
+  base[0] += spare / 2; base[1] += spare / 2;
+
+  let k = 0;
+  TEXT.lines.forEach((word, li) => {
+    // Buchstaben einzeln setzen, Abstände wie im Wort (mit Kerning gemessen)
+    const mW = ink(word, fT);
+    let x0 = M + mW.left;
+    for (let i = 0; i < word.length; i++) {
+      const before = word.slice(0, i);
+      ctx.font = css(fT); ctx.letterSpacing = '0px';
+      const adv = before ? ctx.measureText(before).width : 0;
+      const ch = word[i];
+      const mc = ink(ch, fT);
+      const [rot, dx, dy] = JITTER[k++ % JITTER.length];
+      const x = x0 + adv + dx, y = base[li] + dy;
+      const cx = x + (mc.right - mc.left) / 2, cy = y - capH / 2;
+      text(ch, x, y, fT, { fill: C.ink, transform: `rotate(${rot} ${cx.toFixed(1)} ${cy.toFixed(1)})` });
+    }
+  });
+}
+
+whenFontsReady(draw);
+</script>
+</body>
+</html>

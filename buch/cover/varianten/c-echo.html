@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zu viel für gestern – Variante C: Echo</title>
+<style>
+  @font-face { font-family: "BigShoulders"; src: url("../fonts/BigShoulders-Bold.ttf") format("truetype"); font-weight: 700; }
+  @font-face { font-family: "InstrumentSerif"; src: url("../fonts/InstrumentSerif-Italic.ttf") format("truetype"); font-style: italic; }
+  @font-face { font-family: "InstrumentSans"; src: url("../fonts/InstrumentSans-Regular.ttf") format("truetype"); }
+  @font-face { font-family: "GeistMono"; src: url("../fonts/GeistMono-Regular.ttf") format("truetype"); }
+  @page { size: 135mm 215mm; margin: 0; }
+  html, body { margin: 0; padding: 0; background: #FF4A1C; }
+  svg { display: block; width: 900px; height: 1433px; }
+  @media print { svg { width: 135mm; height: 215mm; } }
+</style>
+</head>
+<body>
+<svg id="cover" viewBox="0 0 900 1433" xmlns="http://www.w3.org/2000/svg"></svg>
+<script src="shared.js"></script>
+<script>
+// Variante C: der Satz, den man ein Leben lang hört, als Echo über dem Titel
+const TEXT = {
+  author:  'MORITZ WOLKE',
+  title:   'ZU VIEL',
+  title2:  'für gestern',
+  sub:     ['Warum ADHS im KI-Zeitalter', 'zur Superkraft wird'],
+  tagline: 'Genau richtig für morgen.',
+  caption: 'ABWEICHUNG ≠ FEHLER',
+};
+const C = { bg: '#FF4A1C', ink: '#15171B', signal: '#F4F0E8', mute: '#7A2A14' };
+
+const ECHO = { repeat: 3, gapMin: 16, stroke: 1.2, opacityFrom: 0.16, opacityTo: 0.85 };
+
+function draw() {
+  el('rect', { x: 0, y: 0, width: W, height: H, fill: C.bg });
+  const yA = author(TEXT, C.ink);
+  const footTop = footer(TEXT, C);
+
+  // Titelblock unten verankern
+  const blockH = titleBlock(TEXT, 0, C, false);
+  const titleTop = footTop - 72 - blockH;
+  titleBlock(TEXT, titleTop, C);
+
+  // Echo-Reihen: gleicher Rhythmus bis an den Titel heran, von leise nach laut
+  const ws = -0.07;
+  const line = Array(ECHO.repeat).fill(TEXT.title).join(' ');
+  const size = fitSize(line, [700, 0, FONTS.display], CONTENT_W, ws);
+  const f = [700, size, FONTS.display];
+  const m = ink(line, f, 0, ws * size);
+  const areaTop = yA + 58;
+  const rows = Math.floor((titleTop - areaTop) / (m.asc + ECHO.gapMin));
+  const pitch = (titleTop - areaTop) / rows;
+  for (let r = 0; r < rows; r++) {
+    const op = ECHO.opacityFrom + (ECHO.opacityTo - ECHO.opacityFrom) * (r / (rows - 1)) ** 1.4;
+    text(line, M + m.left, areaTop + r * pitch + m.asc, f, {
+      fill: 'none', stroke: C.ink, 'stroke-width': ECHO.stroke, 'stroke-opacity': op.toFixed(3),
+      'stroke-linejoin': 'round', 'word-spacing': ws * size,
+    });
+  }
+}
+
+whenFontsReady(draw);
+</script>
+</body>
+</html>

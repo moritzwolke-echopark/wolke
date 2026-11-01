@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zu viel für gestern – Variante E: Ausreißer</title>
+<style>
+  @font-face { font-family: "BigShoulders"; src: url("../fonts/BigShoulders-Bold.ttf") format("truetype"); font-weight: 700; }
+  @font-face { font-family: "InstrumentSerif"; src: url("../fonts/InstrumentSerif-Italic.ttf") format("truetype"); font-style: italic; }
+  @font-face { font-family: "InstrumentSans"; src: url("../fonts/InstrumentSans-Regular.ttf") format("truetype"); }
+  @font-face { font-family: "GeistMono"; src: url("../fonts/GeistMono-Regular.ttf") format("truetype"); }
+  @font-face { font-family: "CourierPrime"; src: url("../fonts/CourierPrime-Regular.ttf") format("truetype"); }
+  @font-face { font-family: "Caveat"; src: url("../fonts/Caveat-Medium.ttf") format("truetype"); font-weight: 500; }
+  @page { size: 135mm 215mm; margin: 0; }
+  html, body { margin: 0; padding: 0; background: #1E2A5C; }
+  svg { display: block; width: 900px; height: 1433px; }
+  @media print { svg { width: 135mm; height: 215mm; } }
+</style>
+</head>
+<body>
+<svg id="cover" viewBox="0 0 900 1433" xmlns="http://www.w3.org/2000/svg"></svg>
+<script src="shared.js"></script>
+<script>
+// Variante E: eine Normalverteilung aus Punkten, „NORMAL“ über dem Gipfel, ein oranger Ausreißer bei +5σ
+const TEXT = {
+  author:  'MORITZ WOLKE',
+  title:   'ZU VIEL',
+  title2:  'für gestern',
+  sub:     ['Warum ADHS im KI-Zeitalter', 'zur Superkraft wird'],
+  tagline: 'Genau richtig für morgen.',
+  caption: 'ABWEICHUNG ≠ FEHLER',
+  peak:    'NORMAL',
+};
+const C = { bg: '#1E2A5C', ink: '#EEEAE2', sub: '#C9CBD6', signal: '#FF4A1C', mute: '#8790B5', dot: '#EEEAE2' };
+const BELL = { from: -3.4, to: 5.4, r: 2.6, gap: 0.9, outlier: 5 };
+
+function draw() {
+  el('rect', { x: 0, y: 0, width: W, height: H, fill: C.bg });
+  const yA = author(TEXT, C.ink);
+  const subBottom = titleBlock(TEXT, yA + 58, C);
+  const footTop = footer(TEXT, C);
+
+  const fAx = [400, 12, FONTS.mono], spAx = 1.5;
+  const axisY = footTop - 96;                                 // Grundlinie der Punkte
+  const top = subBottom + 120;                                // Platz für das Label
+  const sx = s => M + (s - BELL.from) / (BELL.to - BELL.from) * CONTENT_W;
+  const d = 2 * BELL.r + BELL.gap;                            // Rasterabstand
+  const maxStack = Math.floor((axisY - top) / d);
+  const pdf = s => Math.exp(-s * s / 2);
+
+  // Punktesäulen: Höhe folgt der Glockenkurve
+  const g = el('g', { fill: C.dot });
+  let peakTop = axisY;
+  for (let x = sx(-3.2); x <= sx(3.2); x += d) {
+    const s = BELL.from + (x - M) / CONTENT_W * (BELL.to - BELL.from);
+    const k = Math.round(maxStack * pdf(s));
+    for (let j = 0; j < k; j++) {
+      const cy = axisY - BELL.r - 6 - j * d;
+      el('circle', { cx: x.toFixed(2), cy: cy.toFixed(2), r: BELL.r }, g);
+      peakTop = Math.min(peakTop, cy);
+    }
+  }
+
+  // Achse mit Skalenstrichen
+  el('line', { x1: M, y1: axisY, x2: W - M, y2: axisY, stroke: C.ink, 'stroke-width': 1.2 });
+  for (let s = -3; s <= 5; s++) {
+    const x = sx(s), isOut = s === BELL.outlier;
+    el('line', { x1: x, y1: axisY, x2: x, y2: axisY + 9, stroke: isOut ? C.signal : C.ink, 'stroke-width': 1.2 });
+    const lab = s === 0 ? '0' : (s > 0 ? '+' : '−') + Math.abs(s) + 'σ';
+    const m = ink(lab, fAx, spAx);
+    text(lab, x - (m.right - m.left) / 2, axisY + 30, fAx, { fill: isOut ? C.signal : C.mute, 'letter-spacing': spAx });
+  }
+
+  // „NORMAL“ über dem Gipfel, mit feiner Hinweislinie
+  const fP = [400, 15, FONTS.mono], spP = 5;
+  const mP = ink(TEXT.peak, fP, spP);
+  const xp = sx(0), yp = peakTop - 46;
+  text(TEXT.peak, xp - (mP.left + mP.right) / 2 + mP.left, yp, fP, { fill: C.ink, 'letter-spacing': spP });
+  el('line', { x1: xp, y1: yp + 12, x2: xp, y2: peakTop - 14, stroke: C.ink, 'stroke-width': 1, 'stroke-opacity': 0.6 });
+
+  // der Ausreißer
+  const ro = BELL.r * 3.2;
+  el('circle', { cx: sx(BELL.outlier), cy: axisY - ro - 6, r: ro, fill: C.signal });
+}
+
+whenFontsReady(draw);
+</script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zu viel für gestern – Variante B: Fäden</title>
+<style>
+  @font-face { font-family: "BigShoulders"; src: url("../fonts/BigShoulders-Bold.ttf") format("truetype"); font-weight: 700; }
+  @font-face { font-family: "InstrumentSerif"; src: url("../fonts/InstrumentSerif-Italic.ttf") format("truetype"); font-style: italic; }
+  @font-face { font-family: "InstrumentSans"; src: url("../fonts/InstrumentSans-Regular.ttf") format("truetype"); }
+  @font-face { font-family: "GeistMono"; src: url("../fonts/GeistMono-Regular.ttf") format("truetype"); }
+  @page { size: 135mm 215mm; margin: 0; }
+  html, body { margin: 0; padding: 0; background: #121418; }
+  svg { display: block; width: 900px; height: 1433px; }
+  @media print { svg { width: 135mm; height: 215mm; } }
+</style>
+</head>
+<body>
+<svg id="cover" viewBox="0 0 900 1433" xmlns="http://www.w3.org/2000/svg"></svg>
+<script src="shared.js"></script>
+<script>
+// Variante B: viele Gedankenfäden, die sich zu einem Bündel ordnen (Hyperfokus)
+const TEXT = {
+  author:  'MORITZ WOLKE',
+  title:   'ZU VIEL',
+  title2:  'für gestern',
+  sub:     ['Warum ADHS im KI-Zeitalter', 'zur Superkraft wird'],
+  tagline: 'Genau richtig für morgen.',
+  caption: 'ABWEICHUNG ≠ FEHLER',
+};
+const C = { bg: '#121418', ink: '#EEEAE2', sub: '#CFCBC3', signal: '#FF4A1C', mute: '#6F6B64' };
+
+const THREADS = {
+  count: 96,      // Anzahl der Fäden
+  lane: 1.7,      // Abstand im Bündel
+  stroke: 0.75,
+  opacity: 0.5,
+  accent: 61,     // dieser Faden ist orange
+  seed: 7,
+  start: 0.22,    // ab hier (Anteil der Breite) zieht das Bündel nach rechts
+  chaos: 0.62,    // so weit nach rechts reicht das Durcheinander
+  settle: [0.08, 0.62], // Abschnitt, in dem sich die Fäden ordnen
+};
+
+function draw() {
+  el('rect', { x: 0, y: 0, width: W, height: H, fill: C.bg });
+  const yA = author(TEXT, C.ink);
+  const subBottom = titleBlock(TEXT, yA + 58, C);
+  const footTop = footer(TEXT, C);
+
+  const top = subBottom + 72, bottom = footTop - 64, cy = (top + bottom) / 2;
+  const rand = rng(THREADS.seed);
+  const xa = M + THREADS.start * CONTENT_W, xEnd = W - M;
+  const chaosRight = M + THREADS.chaos * CONTENT_W;
+  const steps = 420;
+  const paths = [];
+
+  for (let i = 0; i < THREADS.count; i++) {
+    const laneY = cy + (i - (THREADS.count - 1) / 2) * THREADS.lane;
+    // drei überlagerte Schwingungen ergeben einen eigenen Gedankengang
+    const waves = [0, 1, 2].map(k => ({
+      a: (88 - k * 27) * (0.5 + rand()),
+      fx: (0.4 + rand() * 1.6) * (1 + k), fy: (0.4 + rand() * 1.6) * (1 + k),
+      px: rand() * 2 * Math.PI, py: rand() * 2 * Math.PI,
+    }));
+    const reach = waves.reduce((s, w) => s + w.a, 0);
+    const cx = M + reach + rand() * Math.max(0, chaosRight - M - 2 * reach);
+    const cyc = top + reach + rand() * Math.max(0, bottom - top - 2 * reach);
+
+    let d = '';
+    for (let s = 0; s <= steps; s++) {
+      const t = s / steps;
+      let x = cx, y = cyc;
+      for (const w of waves) {
+        x += w.a * Math.cos(2 * Math.PI * w.fx * t + w.px);
+        y += w.a * Math.sin(2 * Math.PI * w.fy * t + w.py);
+      }
+      const e = smooth(THREADS.settle[0], THREADS.settle[1], t);
+      const lx = xa + (xEnd - xa) * t;
+      d += (s ? 'L' : 'M') + (x + (lx - x) * e).toFixed(2) + ' ' + (y + (laneY - y) * e).toFixed(2);
+    }
+    paths.push(d);
+  }
+
+  const g = el('g', { fill: 'none', 'stroke-linecap': 'butt', 'stroke-linejoin': 'round' });
+  paths.forEach((d, i) => {
+    if (i !== THREADS.accent) el('path', { d, stroke: C.ink, 'stroke-width': THREADS.stroke, 'stroke-opacity': THREADS.opacity }, g);
+  });
+  el('path', { d: paths[THREADS.accent], stroke: C.signal, 'stroke-width': 1.6 }, g);
+}
+
+whenFontsReady(draw);
+</script>
+</body>
+</html>

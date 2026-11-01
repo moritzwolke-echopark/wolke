@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zu viel für gestern – Variante D: Zeugnis</title>
+<style>
+  @font-face { font-family: "BigShoulders"; src: url("../fonts/BigShoulders-Bold.ttf") format("truetype"); font-weight: 700; }
+  @font-face { font-family: "InstrumentSerif"; src: url("../fonts/InstrumentSerif-Italic.ttf") format("truetype"); font-style: italic; }
+  @font-face { font-family: "InstrumentSans"; src: url("../fonts/InstrumentSans-Regular.ttf") format("truetype"); }
+  @font-face { font-family: "GeistMono"; src: url("../fonts/GeistMono-Regular.ttf") format("truetype"); }
+  @font-face { font-family: "CourierPrime"; src: url("../fonts/CourierPrime-Regular.ttf") format("truetype"); }
+  @font-face { font-family: "Caveat"; src: url("../fonts/Caveat-Medium.ttf") format("truetype"); font-weight: 500; }
+  @page { size: 135mm 215mm; margin: 0; }
+  html, body { margin: 0; padding: 0; background: #F3F0E8; }
+  svg { display: block; width: 900px; height: 1433px; }
+  @media print { svg { width: 135mm; height: 215mm; } }
+</style>
+</head>
+<body>
+<svg id="cover" viewBox="0 0 900 1433" xmlns="http://www.w3.org/2000/svg"></svg>
+<script src="shared.js"></script>
+<script>
+// Variante D: Zeugnisbemerkungen, mit orangem Stift durchgestrichen und umgedeutet
+const TEXT = {
+  author:  'MORITZ WOLKE',
+  title:   'ZU VIEL',
+  title2:  'für gestern',
+  sub:     ['Warum ADHS im KI-Zeitalter', 'zur Superkraft wird'],
+  tagline: 'Genau richtig für morgen.',
+  caption: 'ABWEICHUNG ≠ FEHLER',
+  label:   'BEMERKUNGEN:',
+  remarks: [   // [Zeugnis, Randnotiz]
+    ['Lässt sich leicht ablenken.', 'bemerkt alles'],
+    ['Redet oft dazwischen.',       'denkt schneller'],
+    ['Kann nicht still sitzen.',    'bleibt in Bewegung'],
+    ['Arbeitet unordentlich.',      'denkt in Netzen'],
+    ['Träumt im Unterricht.',       'denkt voraus'],
+    ['Könnte, wenn er wollte.',     'will, wenn es zählt'],
+  ],
+};
+const C = { bg: '#F3F0E8', ink: '#15171B', sub: '#2A2D33', signal: '#FF4A1C', mute: '#8A857C', line: '#D6D1C7' };
+const ZEUGNIS = { seed: 11, typeSize: 24, handSize: 38, tilt: [-4, 3] };
+
+function draw() {
+  el('rect', { x: 0, y: 0, width: W, height: H, fill: C.bg });
+  const yA = author(TEXT, C.ink);
+  const subBottom = titleBlock(TEXT, yA + 58, C);
+  const footTop = footer(TEXT, C);
+  const rand = rng(ZEUGNIS.seed);
+
+  // Bemerkungsfeld
+  const top = subBottom + 70, bottom = footTop - 58;
+  const fL = [400, 12, FONTS.mono], spL = 2.6;
+  const mL = ink(TEXT.label, fL, spL);
+  text(TEXT.label, M + mL.left, top + mL.asc, fL, { fill: C.mute, 'letter-spacing': spL });
+  const n = TEXT.remarks.length;
+  const first = top + mL.asc + 26, pitch = (bottom - first) / n;
+  const fType = [400, ZEUGNIS.typeSize, 'CourierPrime'];
+  const fHand = [500, ZEUGNIS.handSize, 'Caveat'];
+
+  TEXT.remarks.forEach(([remark, note], i) => {
+    const base = first + (i + 0.72) * pitch;            // Schriftlinie
+    el('line', { x1: M, y1: base + 9, x2: W - M, y2: base + 9, stroke: C.line, 'stroke-width': 1 });
+    const mT = ink(remark, fType);
+    text(remark, M + mT.left, base, fType, { fill: C.ink });
+
+    // Durchstreichen: eine zittrige Linie, leicht schräg
+    const x1 = M - 4, x2 = M + mT.left + mT.right + 6, ym = base - mT.asc * 0.36;
+    el('path', { d: wobble([[x1, ym + 2 + rand() * 2], [x2, ym - 2 - rand() * 2]], rand, 1.4),
+      fill: 'none', stroke: C.signal, 'stroke-width': 3.4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+
+    // Randnotiz rechts daneben, leicht gekippt
+    const mH = ink(note, fHand);
+    const xh = W - M - mH.right - 2 - rand() * 10, yh = base - 4 + (rand() - 0.5) * 4;
+    const rot = ZEUGNIS.tilt[0] + rand() * (ZEUGNIS.tilt[1] - ZEUGNIS.tilt[0]);
+    text(note, xh, yh, fHand, { fill: C.signal, transform: `rotate(${rot.toFixed(2)} ${xh} ${yh})` });
+  });
+}
+
+whenExtraFontsReady(['400 24px "CourierPrime"', '500 38px "Caveat"'], draw);
+</script>
+</body>
+</html>
